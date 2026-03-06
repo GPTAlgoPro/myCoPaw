@@ -145,15 +145,7 @@ def _create_file_block_support_formatter(
                 out_assistant = [
                     m for m in messages if m.get("role") == "assistant"
                 ]
-                if len(in_assistant) != len(out_assistant):
-                    logger.warning(
-                        "Assistant message count mismatch after formatting "
-                        "(%d before, %d after). "
-                        "Skipping reasoning_content injection.",
-                        len(in_assistant),
-                        len(out_assistant),
-                    )
-                else:
+                if len(in_assistant) == len(out_assistant):
                     for in_msg, out_msg in zip(
                         in_assistant,
                         out_assistant,
@@ -161,6 +153,24 @@ def _create_file_block_support_formatter(
                         reasoning = reasoning_contents.get(id(in_msg))
                         if reasoning:
                             out_msg["reasoning_content"] = reasoning
+                else:
+                    # Count mismatch (formatter merged consecutive assistant
+                    # messages). Match from the end — recent messages are
+                    # most important and least likely to be merged.
+                    logger.debug(
+                        "Assistant message count mismatch after formatting "
+                        "(%d before, %d after). "
+                        "Matching reasoning_content from the end.",
+                        len(in_assistant),
+                        len(out_assistant),
+                    )
+                    min_len = min(len(in_assistant), len(out_assistant))
+                    for i in range(1, min_len + 1):
+                        reasoning = reasoning_contents.get(
+                            id(in_assistant[-i]),
+                        )
+                        if reasoning:
+                            out_assistant[-i]["reasoning_content"] = reasoning
 
             return _strip_top_level_message_name(messages)
 
