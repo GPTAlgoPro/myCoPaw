@@ -150,10 +150,11 @@ class AgentRunner(Runner):
                     user_id=user_id,
                     agent=agent,
                 )
-            except KeyError as e:
+            except (KeyError, ValueError, json.JSONDecodeError) as e:
                 logger.warning(
-                    "load_session_state skipped (state schema mismatch): %s; "
+                    "load_session_state skipped (%s: %s); "
                     "will save fresh state on completion to recover file",
+                    type(e).__name__,
                     e,
                 )
             session_state_loaded = True
