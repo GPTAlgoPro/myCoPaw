@@ -21,6 +21,44 @@ from agentscope.model import ChatModelBase, OpenAIChatModel
 from agentscope.message import Msg
 import agentscope
 
+# ---------------------------------------------------------------------------
+# Monkey-patch: make OpenAI SDK's SSE decoder tolerant of non-UTF-8 bytes.
+#
+# The SSEDecoder in openai._streaming does raw_line.decode("utf-8") without
+# error handling.  Some model API proxies / CDNs occasionally return bytes
+# that are not valid UTF-8 (e.g. GBK-encoded Chinese text or corrupted
+# chunks), causing UnicodeDecodeError that crashes the whole agent run.
+#
+# This patch replaces strict decoding with errors="replace" so that the
+# stream degrades gracefully instead of crashing.
+# ---------------------------------------------------------------------------
+try:
+    from openai._streaming import SSEDecoder as _SSEDecoder
+
+    _orig_iter_bytes = _SSEDecoder.iter_bytes
+    _orig_aiter_bytes = _SSEDecoder.aiter_bytes
+
+    def _safe_iter_bytes(self, iterator):
+        for chunk in self._iter_chunks(iterator):
+            for raw_line in chunk.splitlines():
+                line = raw_line.decode("utf-8", errors="replace")
+                sse = self.decode(line)
+                if sse:
+                    yield sse
+
+    async def _safe_aiter_bytes(self, iterator):
+        async for chunk in self._aiter_chunks(iterator):
+            for raw_line in chunk.splitlines():
+                line = raw_line.decode("utf-8", errors="replace")
+                sse = self.decode(line)
+                if sse:
+                    yield sse
+
+    _SSEDecoder.iter_bytes = _safe_iter_bytes
+    _SSEDecoder.aiter_bytes = _safe_aiter_bytes
+except ImportError:
+    pass  # openai package not installed; nothing to patch
+
 try:
     from agentscope.formatter import AnthropicChatFormatter
     from agentscope.model import AnthropicChatModel
