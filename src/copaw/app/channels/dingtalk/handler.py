@@ -107,12 +107,27 @@ class DingTalkChannelHandler(dingtalk_stream.ChatbotHandler):
                 # Text may be under "text" or "content" (API variation).
                 item_text = item.get("text") or item.get("content")
                 if item_text is not None:
-                    content.append(
-                        TextContent(
-                            type=ContentType.TEXT,
-                            text=(item_text or "").strip(),
-                        ),
-                    )
+                    try:
+                        # Safely handle text encoding and ensure it's a valid string
+                        text_content = str(item_text or "").strip()
+                        if text_content:  # Only add non-empty text
+                            content.append(
+                                TextContent(
+                                    type=ContentType.TEXT,
+                                    text=text_content,
+                                ),
+                            )
+                    except (UnicodeError, UnicodeDecodeError, UnicodeEncodeError) as e:
+                        logger.warning(
+                            "dingtalk: failed to encode text content: %s. "
+                            "Original text type: %s",
+                            str(e),
+                            type(item_text).__name__,
+                        )
+                    except Exception as e:
+                        logger.exception(
+                            "dingtalk: unexpected error processing text content"
+                        )
                 # Picture items may use pictureDownloadCode or downloadCode.
                 dl_code = (
                     item.get("downloadCode")
@@ -188,7 +203,21 @@ class DingTalkChannelHandler(dingtalk_stream.ChatbotHandler):
             content_parts: List[Any] = []
             text = ""
             if incoming_message.text:
-                text = (incoming_message.text.content or "").strip()
+                try:
+                    text = str(incoming_message.text.content or "").strip()
+                except (UnicodeError, UnicodeDecodeError, UnicodeEncodeError) as e:
+                    logger.warning(
+                        "dingtalk: failed to encode main text content: %s. "
+                        "Original content type: %s",
+                        str(e),
+                        type(incoming_message.text.content).__name__,
+                    )
+                    text = ""
+                except Exception as e:
+                    logger.exception(
+                        "dingtalk: unexpected error processing main text content"
+                    )
+                    text = ""
             if text:
                 content_parts.append(
                     TextContent(type=ContentType.TEXT, text=text),
@@ -220,6 +249,20 @@ class DingTalkChannelHandler(dingtalk_stream.ChatbotHandler):
                 )
             # Use rich content (text + media with local paths) when present.
             parts_to_send = content if content else content_parts
+
+            # Safeguard: if no content parts are extracted, log a warning but continue
+            # processing with a default message to avoid silent failures
+            if not parts_to_send:
+                logger.warning(
+                    "dingtalk: no content parts extracted from message, "
+                    "raw_msg_id=%s incoming_text=%r",
+                    raw_msg_id,
+                    (incoming_message.text.content if incoming_message.text else None),
+                )
+                # Add a minimal content part to prevent completely empty processing
+                parts_to_send = [
+                    TextContent(type=ContentType.TEXT, text="[message content processing error]"),
+                ]
 
             sender, skip = sender_from_chatbot_message(incoming_message)
             if skip:
@@ -306,20 +349,40 @@ class DingTalkChannelHandler(dingtalk_stream.ChatbotHandler):
             logger.info("recv from=%s text=%s", sender, text[:100])
             self._emit_native_threadsafe(native)
 
-            response_text = await reply_future
-            if response_text == SENT_VIA_WEBHOOK:
-                logger.info(
-                    "sent to=%s via sessionWebhook (multi-message)",
+            try:
+                response_text = await reply_future
+                if response_text == SENT_VIA_WEBHOOK:
+                    logger.info(
+                        "sent to=%s via sessionWebhook (multi-message)",
+                        sender,
+                    )
+                    # Stream connection still expects a reply frame;
+                    # send minimal ack so the connection completes and next
+                    # messages work.
+                    self.reply_text(" ", incoming_message)
+                else:
+                    out = self._bot_prefix + response_text
+                    self.reply_text(out, incoming_message)
+                    logger.info("sent to=%s text=%r", sender, out[:100])
+            except asyncio.TimeoutError:
+                logger.error(
+                    "dingtalk: reply timeout for sender=%s message_id=%s",
+                    sender,
+                    raw_msg_id,
+                )
+                self.reply_text(
+                    self._bot_prefix + "Processing timed out, please try again later.",
+                    incoming_message
+                )
+            except Exception as e:
+                logger.exception(
+                    "dingtalk: unexpected error during reply for sender=%s",
                     sender,
                 )
-                # Stream connection still expects a reply frame;
-                # send minimal ack so the connection completes and next
-                # messages work.
-                self.reply_text(" ", incoming_message)
-            else:
-                out = self._bot_prefix + response_text
-                self.reply_text(out, incoming_message)
-                logger.info("sent to=%s text=%r", sender, out[:100])
+                self.reply_text(
+                    self._bot_prefix + "An error occurred, please try again later.",
+                    incoming_message
+                )
             return dingtalk_stream.AckMessage.STATUS_OK, "ok"
 
         except Exception:
