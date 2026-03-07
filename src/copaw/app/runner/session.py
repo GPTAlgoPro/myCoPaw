@@ -45,7 +45,9 @@ def _scrub_surrogates(obj):
     if isinstance(obj, str):
         return _SURROGATE_RE.sub("\ufffd", obj)
     if isinstance(obj, dict):
-        return {_scrub_surrogates(k): _scrub_surrogates(v) for k, v in obj.items()}
+        return {
+            _scrub_surrogates(k): _scrub_surrogates(v) for k, v in obj.items()
+        }
     if isinstance(obj, (list, tuple)):
         cleaned = [_scrub_surrogates(item) for item in obj]
         return type(obj)(cleaned)
