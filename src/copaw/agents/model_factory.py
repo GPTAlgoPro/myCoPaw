@@ -39,6 +39,7 @@ try:
     _orig_aiter_bytes = _SSEDecoder.aiter_bytes
 
     def _safe_iter_bytes(self, iterator):
+        # pylint: disable=protected-access
         for chunk in self._iter_chunks(iterator):
             for raw_line in chunk.splitlines():
                 line = raw_line.decode("utf-8", errors="replace")
@@ -47,6 +48,7 @@ try:
                     yield sse
 
     async def _safe_aiter_bytes(self, iterator):
+        # pylint: disable=protected-access
         async for chunk in self._aiter_chunks(iterator):
             for raw_line in chunk.splitlines():
                 line = raw_line.decode("utf-8", errors="replace")
@@ -60,6 +62,7 @@ except ImportError:
     pass  # openai package not installed; nothing to patch
 
 try:
+    # pylint: disable=ungrouped-imports
     from agentscope.formatter import AnthropicChatFormatter
     from agentscope.model import AnthropicChatModel
 except ImportError:  # pragma: no cover - compatibility fallback
@@ -161,6 +164,7 @@ def _create_file_block_support_formatter(
     Returns:
         Enhanced formatter class with file block support
     """
+    # pylint: disable=too-many-statements
 
     class FileBlockSupportFormatter(base_formatter_class):
         """Formatter with file block support for tool results."""

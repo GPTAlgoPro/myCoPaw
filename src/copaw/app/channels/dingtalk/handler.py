@@ -89,6 +89,7 @@ class DingTalkChannelHandler(dingtalk_stream.ChatbotHandler):
         incoming_message: Any,
     ) -> List[Any]:
         """Parse richText from incoming_message into runtime Content list."""
+        # pylint: disable=too-many-branches
         content: List[Any] = []
         type_mapping = get_type_mapping()
         try:
@@ -109,7 +110,7 @@ class DingTalkChannelHandler(dingtalk_stream.ChatbotHandler):
                 item_text = item.get("text") or item.get("content")
                 if item_text is not None:
                     try:
-                        # Safely handle text encoding and ensure it's a valid string
+                        # Handle encoding; skip empty text.
                         text_content = str(item_text or "").strip()
                         if text_content:  # Only add non-empty text
                             content.append(
@@ -129,9 +130,9 @@ class DingTalkChannelHandler(dingtalk_stream.ChatbotHandler):
                             str(e),
                             type(item_text).__name__,
                         )
-                    except Exception as e:
+                    except Exception:
                         logger.exception(
-                            "dingtalk: unexpected error processing text content",
+                            "dingtalk: error processing text content",
                         )
                 # Picture items may use pictureDownloadCode or downloadCode.
                 dl_code = (
@@ -222,9 +223,9 @@ class DingTalkChannelHandler(dingtalk_stream.ChatbotHandler):
                         type(incoming_message.text.content).__name__,
                     )
                     text = ""
-                except Exception as e:
+                except Exception:
                     logger.exception(
-                        "dingtalk: unexpected error processing main text content",
+                        "dingtalk: error processing main text content",
                     )
                     text = ""
             if text:
@@ -259,8 +260,8 @@ class DingTalkChannelHandler(dingtalk_stream.ChatbotHandler):
             # Use rich content (text + media with local paths) when present.
             parts_to_send = content if content else content_parts
 
-            # Safeguard: if no content parts are extracted, log a warning but continue
-            # processing with a default message to avoid silent failures
+            # Safeguard: log warning if no content parts extracted, continue
+            # processing with a default message to avoid silent failures.
             if not parts_to_send:
                 logger.warning(
                     "dingtalk: no content parts extracted from message, "
@@ -272,7 +273,7 @@ class DingTalkChannelHandler(dingtalk_stream.ChatbotHandler):
                         else None
                     ),
                 )
-                # Add a minimal content part to prevent completely empty processing
+                # Add minimal content to prevent empty processing.
                 parts_to_send = [
                     TextContent(
                         type=ContentType.TEXT,
@@ -395,7 +396,7 @@ class DingTalkChannelHandler(dingtalk_stream.ChatbotHandler):
                     + "Processing timed out, please try again later.",
                     incoming_message,
                 )
-            except Exception as e:
+            except Exception:
                 logger.exception(
                     "dingtalk: unexpected error during reply for sender=%s",
                     sender,
