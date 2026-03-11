@@ -32,11 +32,11 @@ pip install copaw
 
 3. Docker 安装
 
-如果你已经安装好了Docker，执行以下两条命令后，即可在浏览器打开 http://127.0.0.1:8088/ 进入控制台。
+如果你已经安装好了Docker，执行以下两条命令后，即可在浏览器打开 http://127.0.0.1:10888/ 进入控制台。
 
 ```
 docker pull agentscope/copaw:latest
-docker run -p 127.0.0.1:8088:8088 \
+docker run -p 127.0.0.1:10888:10888 \
   -v copaw-data:/app/working \
   -v copaw-secrets:/app/working.secret \
   agentscope/copaw:latest
@@ -93,7 +93,7 @@ pip install -e .
 
 ```
 docker pull agentscope/copaw:latest
-docker run -p 127.0.0.1:8088:8088 \
+docker run -p 127.0.0.1:10888:10888 \
   -v copaw-data:/app/working \
   -v copaw-secrets:/app/working.secret \
   agentscope/copaw:latest
@@ -115,7 +115,7 @@ copaw init --defaults
 copaw app
 ```
 
-控制台默认地址为 `http://127.0.0.1:8088/`，使用默认配置快速初始化后，可以进入控制台快捷自定义相关内容。详情请见[快速开始](https://copaw.agentscope.io/docs/quickstart)。
+控制台默认地址为 `http://127.0.0.1:10888/`，使用默认配置快速初始化后，可以进入控制台快捷自定义相关内容。详情请见[快速开始](https://copaw.agentscope.io/docs/quickstart)。
 
 ### 开源地址
 

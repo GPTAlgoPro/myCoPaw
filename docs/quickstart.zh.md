@@ -11,7 +11,7 @@
 
 > 📖 阅读前请先了解 [项目介绍](./intro)，完成安装与启动后可查看 [控制台](./console)。
 
-> 💡 **安装并启动后**：在配置频道之前，可先打开 [控制台](./console)（浏览器访问 `http://127.0.0.1:8088/`）与 CoPAW 对话、配置 Agent；要在钉钉、飞书、QQ 等 app 里对话时，再前往 [频道配置](./channels) 接入频道。
+> 💡 **安装并启动后**：在配置频道之前，可先打开 [控制台](./console)（浏览器访问 `http://127.0.0.1:10888/`）与 CoPAW 对话、配置 Agent；要在钉钉、飞书、QQ 等 app 里对话时，再前往 [频道配置](./channels) 接入频道。
 
 ---
 
@@ -127,7 +127,7 @@ bash install.sh --extras ollama      # Ollama（跨平台，需 Ollama 服务运
 copaw app
 ```
 
-服务默认监听 `127.0.0.1:8088`。若已配置频道，CoPaw 会在对应 app 内回复；若尚未配置，也可先完成本节再前往频道配置。
+服务默认监听 `127.0.0.1:10888`。若已配置频道，CoPaw 会在对应 app 内回复；若尚未配置，也可先完成本节再前往频道配置。
 
 ---
 
@@ -203,13 +203,13 @@ pip install copaw
 
 ```bash
 docker pull agentscope/copaw:latest
-docker run -p 127.0.0.1:8088:8088 \
+docker run -p 127.0.0.1:10888:10888 \
   -v copaw-data:/app/working \
   -v copaw-secrets:/app/working.secret \
   agentscope/copaw:latest
 ```
 
-然后在浏览器打开 **http://127.0.0.1:8088/** 进入控制台。配置、记忆与 Skills 保存在 `copaw-data` 卷中；模型配置与 API Key 保存在 `copaw-secrets` 卷中。传入 API Key 可在 `docker run` 时加 `-e DASHSCOPE_API_KEY=xxx` 或 `--env-file .env`。
+然后在浏览器打开 **http://127.0.0.1:10888/** 进入控制台。配置、记忆与 Skills 保存在 `copaw-data` 卷中；模型配置与 API Key 保存在 `copaw-secrets` 卷中。传入 API Key 可在 `docker run` 时加 `-e DASHSCOPE_API_KEY=xxx` 或 `--env-file .env`。
 
 ---
 
@@ -229,7 +229,7 @@ docker run -p 127.0.0.1:8088:8088 \
 服务启动后,可通过 HTTP 调用 Agent 接口以确认环境正常。接口为 **POST** `/api/agent/process`,请求体为 JSON,支持 SSE 流式响应。单轮请求示例:
 
 ```bash
-curl -N -X POST "http://localhost:8088/api/agent/process" \
+curl -N -X POST "http://localhost:10888/api/agent/process" \
   -H "Content-Type: application/json" \
   -d '{"input":[{"role":"user","content":[{"type":"text","text":"你好"}]}],"session_id":"session123"}'
 ```
