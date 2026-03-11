@@ -58,10 +58,29 @@ agent_app = AgentApp(
 )
 
 
+def _ensure_working_dir() -> None:
+    """Ensure WORKING_DIR exists with read/write permissions."""
+    if not WORKING_DIR.exists():
+        WORKING_DIR.mkdir(parents=True, mode=0o755, exist_ok=True)
+        logger.info("Created working directory: %s", WORKING_DIR)
+    # Verify read/write access
+    if not os.access(WORKING_DIR, os.R_OK | os.W_OK):
+        try:
+            WORKING_DIR.chmod(0o755)
+            logger.info("Updated permissions for: %s", WORKING_DIR)
+        except OSError as e:
+            logger.warning(
+                "Cannot set permissions on %s: %s",
+                WORKING_DIR,
+                e,
+            )
+
+
 @asynccontextmanager
 async def lifespan(
     app: FastAPI,
 ):  # pylint: disable=too-many-statements,too-many-branches
+    _ensure_working_dir()
     add_copaw_file_handler(WORKING_DIR / "copaw.log")
     await runner.start()
 
