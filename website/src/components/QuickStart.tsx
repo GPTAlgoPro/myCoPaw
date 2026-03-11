@@ -43,7 +43,7 @@ const COMMANDS = {
   ],
   docker: [
     `docker pull ${DOCKER_IMAGE}`,
-    `docker run -p 127.0.0.1:8088:8088 -v copaw-data:/app/working ${DOCKER_IMAGE}`,
+    `docker run -p 127.0.0.1:10888:10888 -v copaw-data:/app/working ${DOCKER_IMAGE}`,
   ],
 } as const;
 

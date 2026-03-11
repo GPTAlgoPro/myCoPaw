@@ -21,7 +21,7 @@ from ..utils.logging import setup_logger, SuppressPathAccessLogFilter
 )
 @click.option(
     "--port",
-    default=8088,
+    default=10888,
     type=int,
     show_default=True,
     help="Bind port",

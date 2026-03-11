@@ -35,11 +35,11 @@ pip install copaw
 3. Install with Docker
 
 If Docker is installed, run the following commands and then open
-`http://127.0.0.1:8088/` in your browser:
+`http://127.0.0.1:10888/` in your browser:
 
 ```
 docker pull agentscope/copaw:latest
-docker run -p 127.0.0.1:8088:8088 \
+docker run -p 127.0.0.1:10888:10888 \
   -v copaw-data:/app/working \
   -v copaw-secrets:/app/working.secret \
   agentscope/copaw:latest
@@ -96,7 +96,7 @@ pip install -e .
 
 ```
 docker pull agentscope/copaw:latest
-docker run -p 127.0.0.1:8088:8088 \
+docker run -p 127.0.0.1:10888:10888 \
   -v copaw-data:/app/working \
   -v copaw-secrets:/app/working.secret \
   agentscope/copaw:latest
@@ -118,7 +118,7 @@ Start service:
 copaw app
 ```
 
-The default Console URL is `http://127.0.0.1:8088/`. After quick init, you can
+The default Console URL is `http://127.0.0.1:10888/`. After quick init, you can
 open Console and customize settings. See
 [Quick Start](https://copaw.agentscope.io/docs/quickstart).
 

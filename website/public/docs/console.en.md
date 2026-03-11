@@ -1,7 +1,7 @@
 # Console
 
 The **Console** is CoPaw's built-in web interface. After running `copaw app`,
-open `http://127.0.0.1:8088/` in your browser to enter the Console.
+open `http://127.0.0.1:10888/` in your browser to enter the Console.
 
 **In the Console, you can:**
 

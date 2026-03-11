@@ -42,7 +42,7 @@ Start the CoPaw server. Everything else — channels, cron jobs, the Console
 UI — depends on this.
 
 ```bash
-copaw app                             # Start on 127.0.0.1:8088
+copaw app                             # Start on 127.0.0.1:10888
 copaw app --host 0.0.0.0 --port 9090 # Custom address
 copaw app --reload                    # Auto-reload on code change (dev)
 copaw app --workers 4                 # Multi-worker mode
@@ -52,14 +52,14 @@ copaw app --log-level debug           # Verbose logging
 | Option        | Default     | Description                                                   |
 | ------------- | ----------- | ------------------------------------------------------------- |
 | `--host`      | `127.0.0.1` | Bind host                                                     |
-| `--port`      | `8088`      | Bind port                                                     |
+| `--port`      | `10888`      | Bind port                                                     |
 | `--reload`    | off         | Auto-reload on file changes (dev only)                        |
 | `--workers`   | `1`         | Number of worker processes                                    |
 | `--log-level` | `info`      | `critical` / `error` / `warning` / `info` / `debug` / `trace` |
 
 ### Console
 
-Once `copaw app` is running, open `http://127.0.0.1:8088/` in your browser to
+Once `copaw app` is running, open `http://127.0.0.1:10888/` in your browser to
 access the **Console** — a web UI for chat, channels, cron, skills, models,
 and more. See [Console](./console) for a full walkthrough.
 
@@ -405,7 +405,7 @@ Every `copaw` subcommand inherits:
 | Option          | Default     | Description                                    |
 | --------------- | ----------- | ---------------------------------------------- |
 | `--host`        | `127.0.0.1` | API host (auto-detected from last `copaw app`) |
-| `--port`        | `8088`      | API port (auto-detected from last `copaw app`) |
+| `--port`        | `10888`      | API port (auto-detected from last `copaw app`) |
 | `-h` / `--help` |             | Show help message                              |
 
 If the server runs on a non-default address, pass these globally:

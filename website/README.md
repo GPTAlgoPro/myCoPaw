@@ -42,7 +42,7 @@ Output is in `dist/`.
 
 - **Production-style server** (same as prod, no PM2):
   `pnpm run preview:prod`
-  Serves `dist/` at `http://localhost:8088` with SPA fallback.
+  Serves `dist/` at `http://localhost:10888` with SPA fallback.
 
 ## Production with PM2
 
@@ -76,7 +76,7 @@ Or use the helper script (installs PM2 if missing, then starts):
 bash scripts/start.sh
 ```
 
-Default port: **8088**. Override with `PORT=3000 pm2 start ecosystem.config.cjs` or by editing `ecosystem.config.cjs`.
+Default port: **10888**. Override with `PORT=3000 pm2 start ecosystem.config.cjs` or by editing `ecosystem.config.cjs`.
 
 ### 3. PM2 commands
 
@@ -106,5 +106,5 @@ bash scripts/website_build.sh
 
 ## Config
 
-- **Port**: Set in `ecosystem.config.cjs` (`env.PORT` / `args`) or env `PORT`. Default `8088`.
+- **Port**: Set in `ecosystem.config.cjs` (`env.PORT` / `args`) or env `PORT`. Default `10888`.
 - **App name**: `copaw-website` in `ecosystem.config.cjs` (used in `pm2 logs/restart`).

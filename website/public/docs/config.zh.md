@@ -130,7 +130,7 @@ copaw app
   },
   "last_api": {
     "host": "127.0.0.1",
-    "port": 8088
+    "port": 10888
   },
   "last_dispatch": null,
   "show_tool_details": true

@@ -11,7 +11,7 @@ This section describes six ways to run CoPAW:
 
 > 📖 Read [Introduction](./intro) first; after install see [Console](./console).
 
-> 💡 **After install & start**: Before configuring channels, you can open the [Console](./console) (`http://127.0.0.1:8088/`) to chat with CoPAW and configure the agent. When you're ready to chat in DingTalk, Feishu, QQ, etc., head to [Channels](./channels) to add a channel.
+> 💡 **After install & start**: Before configuring channels, you can open the [Console](./console) (`http://127.0.0.1:10888/`) to chat with CoPAW and configure the agent. When you're ready to chat in DingTalk, Feishu, QQ, etc., head to [Channels](./channels) to add a channel.
 
 ---
 
@@ -131,7 +131,7 @@ DingTalk, Feishu, QQ, etc.
 copaw app
 ```
 
-The server listens on `127.0.0.1:8088` by default. If you have already
+The server listens on `127.0.0.1:10888` by default. If you have already
 configured a channel, CoPaw will reply there; otherwise you can add one after
 this step via [Channels](./channels).
 
@@ -210,13 +210,13 @@ Pull and run:
 
 ```bash
 docker pull agentscope/copaw:latest
-docker run -p 127.0.0.1:8088:8088 \
+docker run -p 127.0.0.1:10888:10888 \
   -v copaw-data:/app/working \
   -v copaw-secrets:/app/working.secret \
   agentscope/copaw:latest
 ```
 
-Then open **http://127.0.0.1:8088/** in your browser for the Console. Config, memory, and skills are stored in the `copaw-data` volume; model provider settings and API keys are in the `copaw-secrets` volume. To pass API keys, add `-e DASHSCOPE_API_KEY=xxx` or `--env-file .env` to `docker run`.
+Then open **http://127.0.0.1:10888/** in your browser for the Console. Config, memory, and skills are stored in the `copaw-data` volume; model provider settings and API keys are in the `copaw-secrets` volume. To pass API keys, add `-e DASHSCOPE_API_KEY=xxx` or `--env-file .env` to `docker run`.
 
 ---
 
@@ -237,7 +237,7 @@ After the server is running, you can call the Agent API to confirm the setup.
 Endpoint: **POST** `/api/agent/process`, JSON body, SSE streaming. Single-turn example:
 
 ```bash
-curl -N -X POST "http://localhost:8088/api/agent/process" \
+curl -N -X POST "http://localhost:10888/api/agent/process" \
   -H "Content-Type: application/json" \
   -d '{"input":[{"role":"user","content":[{"type":"text","text":"Hello"}]}],"session_id":"session123"}'
 ```
