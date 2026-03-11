@@ -88,3 +88,7 @@ CLAUDE.md
 
 # Build cache
 .cache/  # Includes conda_unpack_wheels/ for Windows packaging workaround
+
+# CI config files (ignored locally)
+.pre-commit-config.yaml
+.flake8
