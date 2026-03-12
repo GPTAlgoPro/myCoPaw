@@ -288,6 +288,9 @@ class DingTalkChannelHandler(dingtalk_stream.ChatbotHandler):
                     "session_webhook_expired_time",
                     None,
                 )
+                # Store expiration time in meta for persistence
+                if sw_exp is not None:
+                    meta["session_webhook_expired_time"] = sw_exp
                 logger.info(
                     "dingtalk recv: session_webhook present "
                     "session_from_url=%s "
