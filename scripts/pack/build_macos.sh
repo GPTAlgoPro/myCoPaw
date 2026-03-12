@@ -11,7 +11,27 @@ ARCHIVE="${DIST}/copaw-env.tar.gz"
 APP_NAME="CoPaw"
 APP_DIR="${DIST}/${APP_NAME}.app"
 
-echo "== Building wheel (includes console frontend) =="
+# --- progress helpers ---
+STEP=0
+step() {
+  STEP=$((STEP + 1))
+  echo ""
+  echo "▶ [Step ${STEP}] $*"
+}
+ok() { echo "  ✓ $*"; }
+info() { echo "  · $*"; }
+
+step "Pre-build: check dist/ output directory"
+if [[ -d "${DIST}" ]] && [[ -n "$(ls -A "${DIST}" 2>/dev/null)" ]]; then
+  info "dist/ is not empty — clearing to avoid stale artifacts"
+  rm -rf "${DIST:?}"/*
+  ok "dist/ cleared"
+else
+  info "dist/ is empty or does not exist, nothing to clean"
+fi
+mkdir -p "${DIST}"
+
+step "Building wheel (includes console frontend)"
 # Skip wheel_build if dist already has a wheel for current version
 VERSION_FILE="${REPO_ROOT}/src/copaw/__version__.py"
 CURRENT_VERSION=""
@@ -25,35 +45,39 @@ if [[ -n "${CURRENT_VERSION}" ]]; then
   shopt -s nullglob
   whls=("${REPO_ROOT}/dist/copaw-${CURRENT_VERSION}-"*.whl)
   if [[ ${#whls[@]} -gt 0 ]]; then
-    echo "dist/ already has wheel for version ${CURRENT_VERSION}, skipping."
+    ok "dist/ already has wheel for version ${CURRENT_VERSION}, skipping build"
   else
-    # Clean up old wheels to avoid confusion
-    old_whls=("${REPO_ROOT}/dist/copaw-"*.whl)
-    if [[ ${#old_whls[@]} -gt 0 ]]; then
-      echo "Removing old wheel files: ${old_whls[*]}"
-      rm -f "${old_whls[@]}"
-    fi
+    info "No wheel found for ${CURRENT_VERSION}, building..."
     bash scripts/wheel_build.sh
+    ok "Wheel built"
   fi
 else
+  info "Version unknown, building wheel unconditionally..."
   bash scripts/wheel_build.sh
+  ok "Wheel built"
 fi
 
-echo "== Building conda-packed env =="
+step "Building conda-packed environment → ${ARCHIVE}"
 python "${PACK_DIR}/build_common.py" --output "$ARCHIVE" --format tar.gz
+ok "conda env packed: ${ARCHIVE}"
 
-echo "== Building .app bundle =="
+step "Assembling .app bundle → ${APP_DIR}"
 rm -rf "$APP_DIR"
 mkdir -p "${APP_DIR}/Contents/MacOS"
 mkdir -p "${APP_DIR}/Contents/Resources"
+ok "Bundle skeleton created"
 
-# Unpack conda env into Resources/env
+info "Unpacking conda env into Resources/env (this may take a while)..."
 mkdir -p "${APP_DIR}/Contents/Resources/env"
 tar -xzf "$ARCHIVE" -C "${APP_DIR}/Contents/Resources/env" --strip-components=0
+ok "conda env unpacked"
 
-# Fix paths for portability (required or app will crash on launch)
+info "Running conda-unpack to fix embedded paths..."
 if [[ -x "${APP_DIR}/Contents/Resources/env/bin/conda-unpack" ]]; then
   (cd "${APP_DIR}/Contents/Resources/env" && ./bin/conda-unpack)
+  ok "conda-unpack completed"
+else
+  info "conda-unpack not found, skipping"
 fi
 
 # Launcher: force packed env; when no TTY log to ~/.copaw/desktop.log (no exec so we see errors)
@@ -129,16 +153,17 @@ fi
 exec "$ENV_DIR/bin/python" -u -m copaw desktop --log-level "$LOG_LEVEL"
 LAUNCHER
 chmod +x "${APP_DIR}/Contents/MacOS/${APP_NAME}"
+ok "Launcher script written and marked executable"
 
-# Icon: use pre-generated icon.icns
+step "Configuring icon"
 if [[ -f "${PACK_DIR}/assets/icon.icns" ]]; then
-  echo "== Using pre-generated icon.icns =="
+  ok "Using pre-generated icon.icns"
 else
-  echo "Warning: icon.icns not found at ${PACK_DIR}/assets/icon.icns"
-  echo "Generate it first: bash scripts/pack/generate_icons.sh"
+  echo "  ⚠ icon.icns not found at ${PACK_DIR}/assets/icon.icns"
+  echo "    Generate it first: bash scripts/pack/generate_icons.sh"
 fi
 
-# Info.plist (include icon key if icon.icns exists)
+step "Writing Info.plist"
 # Prioritize version from __version__.py to ensure accuracy
 VERSION="${CURRENT_VERSION}"
 if [[ -z "${VERSION}" ]]; then
@@ -146,9 +171,9 @@ if [[ -z "${VERSION}" ]]; then
   VERSION="$("${APP_DIR}/Contents/Resources/env/bin/python" -c \
     "from importlib.metadata import version; print(version('copaw'))" 2>/dev/null \
     || echo "0.0.0")"
-  echo "Using version from packed env metadata: ${VERSION}"
+  info "Version from packed env metadata: ${VERSION}"
 else
-  echo "Version determined from __version__.py: ${VERSION}"
+  info "Version from __version__.py: ${VERSION}"
 fi
 ICON_PLIST=""
 if [[ -f "${PACK_DIR}/assets/icon.icns" ]]; then
@@ -174,10 +199,18 @@ cat > "${APP_DIR}/Contents/Info.plist" << INFOPLIST
 </plist>
 INFOPLIST
 
-echo "== Built ${APP_DIR} =="
+ok "Info.plist written"
+
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "  Build complete: ${APP_DIR}"
+echo "  Version: ${VERSION}"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
 # Optional: create zip for distribution (set CREATE_ZIP=1)
 if [[ -n "${CREATE_ZIP}" ]]; then
+  step "Creating distribution zip"
   ZIP_NAME="${DIST}/CoPaw-${VERSION}-macOS.zip"
   ditto -c -k --sequesterRsrc --keepParent "${APP_DIR}" "${ZIP_NAME}"
-  echo "== Created ${ZIP_NAME} =="
+  ok "Created ${ZIP_NAME}"
 fi
