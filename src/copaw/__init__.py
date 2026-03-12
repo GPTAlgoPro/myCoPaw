@@ -3,7 +3,23 @@ import logging
 import os
 import time
 
-from .utils.logging import setup_logger
+
+# Filter Nacos SDK warning from agentscope-runtime before any import.
+# This warning occurs at module import time when nacos-sdk-python is not
+# installed, but copaw does not use Nacos functionality.
+class _NacosWarningFilter(logging.Filter):
+    """Filter out Nacos SDK unavailability warnings from agentscope-runtime."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        msg = record.getMessage()
+        if "NacosRegistry" in msg or "nacos-sdk-python" in msg:
+            return False
+        return True
+
+
+logging.getLogger().addFilter(_NacosWarningFilter())
+
+from .utils.logging import setup_logger  # noqa: E402
 
 # Fallback before we can safely read canonical constant definitions.
 LOG_LEVEL_ENV = "COPAW_LOG_LEVEL"

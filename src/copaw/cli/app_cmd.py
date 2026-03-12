@@ -90,4 +90,5 @@ def app_cmd(
         reload=reload,
         workers=workers,
         log_level=log_level,
+        ws="wsproto",  # Use wsproto to avoid websockets.legacy deprecation warnings
     )
