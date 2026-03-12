@@ -133,9 +133,12 @@ def main() -> int:
                 "pip",
                 "install",
                 "--upgrade",
+                "-v",
                 "pip",
             ],
         )
+        print(f"Installing copaw[full] from {wheel_path.name}...", flush=True)
+        print("(This may take several minutes to download dependencies)", flush=True)
         _run(
             [
                 conda,
@@ -146,10 +149,13 @@ def main() -> int:
                 "-m",
                 "pip",
                 "install",
+                "--progress-bar=on",
+                "-v",
                 f"copaw[full] @ {wheel_uri}",
             ],
         )
-        print("Verifying certifi is installed (required for SSL)...")
+        print("copaw[full] installed successfully!", flush=True)
+        print("Verifying certifi is installed (required for SSL)...", flush=True)
         _run(
             [
                 conda,
