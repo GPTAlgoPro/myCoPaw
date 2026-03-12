@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=redefined-outer-name,unused-argument
 import asyncio
+import logging
 import mimetypes
 import os
 from contextlib import asynccontextmanager
@@ -10,7 +11,15 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from agentscope_runtime.engine.app import AgentApp
+
+# Filter Nacos SDK warning before importing agentscope_runtime.
+# copaw does not use Nacos functionality.
+_nacos_logger = logging.getLogger(
+    "agentscope_runtime.engine.deployers.adapter.a2a.nacos_a2a_registry"
+)
+_nacos_logger.setLevel(logging.ERROR)
+
+from agentscope_runtime.engine.app import AgentApp  # noqa: E402
 
 from .runner import AgentRunner
 from ..config import (  # pylint: disable=no-name-in-module

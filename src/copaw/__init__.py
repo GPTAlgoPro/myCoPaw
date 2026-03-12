@@ -2,24 +2,59 @@
 import logging
 import os
 import time
+import warnings
 
+# Filter websockets deprecation warnings from third-party libraries
+# (lark_oapi/websockets legacy API usage).
+# Keep this at package-import time so CLI + uvicorn workers both inherit it.
+warnings.filterwarnings(
+    "ignore",
+    message=r"websockets\.legacy is deprecated.*",
+    category=DeprecationWarning,
+)
+warnings.filterwarnings(
+    "ignore",
+    message=r"websockets\.InvalidStatusCode is deprecated.*",
+    category=DeprecationWarning,
+)
+# Be explicit about source modules as an extra safeguard when Python warning
+# policy is configured externally (e.g. PYTHONWARNINGS=default).
+warnings.filterwarnings(
+    "ignore",
+    category=DeprecationWarning,
+    module=r"lark_oapi\.ws\.client",
+)
+warnings.filterwarnings(
+    "ignore",
+    category=DeprecationWarning,
+    module=r"websockets\.legacy(\..*)?",
+)
 
-# Filter Nacos SDK warning from agentscope-runtime before any import.
-# This warning occurs at module import time when nacos-sdk-python is not
-# installed, but copaw does not use Nacos functionality.
-class _NacosWarningFilter(logging.Filter):
-    """Filter out Nacos SDK unavailability warnings from agentscope-runtime."""
+# Silence noisy MCP transport INFO logs from third-party client internals.
+for _logger_name in (
+    "mcp.client.session._stateful_client_base",
+    "_stateful_client_base",
+):
+    logging.getLogger(_logger_name).setLevel(logging.WARNING)
 
-    def filter(self, record: logging.LogRecord) -> bool:
-        msg = record.getMessage()
-        if "NacosRegistry" in msg or "nacos-sdk-python" in msg:
-            return False
-        return True
+# Some MCP/SDK dependencies emit logs via loguru instead of stdlib logging.
+# Disable the known noisy logger names if loguru is available.
+try:
+    from loguru import logger as _loguru_logger
 
+    # Disable noisy MCP connection logs regardless of exact module naming.
+    for _module_name in (
+        "_stateful_client_base",
+        "mcp.client.session._stateful_client_base",
+        "mcp.client.session",
+        "mcp.client",
+        "mcp",
+    ):
+        _loguru_logger.disable(_module_name)
+except Exception:
+    pass
 
-logging.getLogger().addFilter(_NacosWarningFilter())
-
-from .utils.logging import setup_logger  # noqa: E402
+from .utils.logging import setup_logger
 
 # Fallback before we can safely read canonical constant definitions.
 LOG_LEVEL_ENV = "COPAW_LOG_LEVEL"

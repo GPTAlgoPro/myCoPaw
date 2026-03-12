@@ -22,6 +22,7 @@ import sys
 import threading
 import time
 import types
+import warnings
 from collections import OrderedDict
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
@@ -98,17 +99,30 @@ else:
         _declare_namespace_patched = True
 
 try:
-    import lark_oapi as lark
-    from lark_oapi.api.im.v1 import (
-        CreateImageRequest,
-        CreateImageRequestBody,
-        CreateMessageRequest,
-        CreateMessageRequestBody,
-        CreateMessageReactionRequest,
-        CreateMessageReactionRequestBody,
-        Emoji,
-        P2ImMessageReceiveV1,
-    )
+    # lark_oapi imports legacy websockets symbols during import on some
+    # versions; silence those third-party deprecation warnings locally.
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            message=r"websockets\.InvalidStatusCode is deprecated.*",
+            category=DeprecationWarning,
+        )
+        warnings.filterwarnings(
+            "ignore",
+            message=r"websockets\.legacy is deprecated.*",
+            category=DeprecationWarning,
+        )
+        import lark_oapi as lark
+        from lark_oapi.api.im.v1 import (
+            CreateImageRequest,
+            CreateImageRequestBody,
+            CreateMessageRequest,
+            CreateMessageRequestBody,
+            CreateMessageReactionRequest,
+            CreateMessageReactionRequestBody,
+            Emoji,
+            P2ImMessageReceiveV1,
+        )
 except ImportError:  # pragma: no cover - optional dependency may be missing
     lark = None  # type: ignore[assignment]
     CreateImageRequest = None  # type: ignore[assignment]
@@ -1815,7 +1829,20 @@ class FeishuChannel(BaseChannel):
         ws_loop = asyncio.new_event_loop()
         asyncio.set_event_loop(ws_loop)
         try:
-            import lark_oapi.ws.client as ws_client
+            # lark_oapi currently imports legacy websockets symbols that emit
+            # noisy deprecation warnings on websockets>=14; suppress only here.
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    "ignore",
+                    message=r"websockets\.InvalidStatusCode is deprecated.*",
+                    category=DeprecationWarning,
+                )
+                warnings.filterwarnings(
+                    "ignore",
+                    message=r"websockets\.legacy is deprecated.*",
+                    category=DeprecationWarning,
+                )
+                import lark_oapi.ws.client as ws_client
 
             ws_client.loop = ws_loop
         except ImportError:

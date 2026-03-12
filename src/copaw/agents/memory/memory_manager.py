@@ -104,11 +104,9 @@ class MemoryManager(ReMeLight):
         if vector_enabled:
             logger.info("Vector search enabled.")
         else:
-            logger.warning(
-                "Vector search disabled. Memory search functionality "
-                "will be restricted. "
-                "To enable, configure: EMBEDDING_API_KEY, "
-                "EMBEDDING_BASE_URL, EMBEDDING_MODEL_NAME.",
+            logger.info(
+                "Vector search disabled. To enable, configure: "
+                "EMBEDDING_API_KEY, EMBEDDING_BASE_URL, EMBEDDING_MODEL_NAME.",
             )
 
         # Check if full-text search (FTS) is enabled via environment variable
