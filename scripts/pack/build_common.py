@@ -12,6 +12,7 @@ import random
 import string
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -39,6 +40,30 @@ def _conda_exe() -> str:
 
 def _run(cmd: list[str], cwd: Path | None = None) -> None:
     subprocess.run(cmd, cwd=cwd or REPO_ROOT, check=True)
+
+
+def _run_with_retry(
+    cmd: list[str],
+    cwd: Path | None = None,
+    max_retries: int = 3,
+    delay: int = 10,
+    label: str = "",
+) -> None:
+    """Run a command with retry on failure (useful for flaky network operations)."""
+    for attempt in range(1, max_retries + 1):
+        try:
+            _run(cmd, cwd=cwd)
+            return
+        except subprocess.CalledProcessError as exc:
+            if attempt == max_retries:
+                raise
+            tag = f" [{label}]" if label else ""
+            print(
+                f"  ⚠ Attempt {attempt}/{max_retries}{tag} failed "
+                f"(exit {exc.returncode}), retrying in {delay}s...",
+                flush=True,
+            )
+            time.sleep(delay)
 
 
 def _pick_wheel(wheel_arg: str | None) -> Path:
@@ -109,18 +134,30 @@ def main() -> int:
         f"{ENV_PREFIX}{''.join(random.choices(string.ascii_lowercase, k=8))}"
     )
 
+    # Channels for the temp env: use only tuna mirrors to avoid conda-forge
+    # network failures (conda-forge uses the official anaconda.org CDN which
+    # may be unreachable in some network environments).
+    _TUNA_CHANNELS = [
+        "-c", "https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main/",
+        "-c", "https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free/",
+        "--override-channels",
+    ]
+
     conda = _conda_exe()
+    print(f"▶ Creating temporary conda env: {env_name}", flush=True)
     try:
-        _run(
+        _run_with_retry(
             [
                 conda,
                 "create",
                 "-n",
                 env_name,
+                *_TUNA_CHANNELS,
                 f"python={args.python}",
                 "pip",
                 "-y",
             ],
+            label="conda create",
         )
         _run(
             [
@@ -190,17 +227,21 @@ def main() -> int:
                     str(wheels_cache),
                 ],
             )
-        _run(
+        print("▶ Installing conda-pack into temp env (via pip)...", flush=True)
+        _run_with_retry(
             [
                 conda,
                 "run",
                 "-n",
                 env_name,
-                conda,
+                "python",
+                "-m",
+                "pip",
                 "install",
-                "-y",
+                "--quiet",
                 "conda-pack",
             ],
+            label="pip install conda-pack",
         )
         if out_path.exists():
             out_path.unlink()

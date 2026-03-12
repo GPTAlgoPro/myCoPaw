@@ -13,13 +13,35 @@ APP_DIR="${DIST}/${APP_NAME}.app"
 
 # --- progress helpers ---
 STEP=0
+TOTAL_STEPS=6
+_BUILD_START=$(date +%s)
+
 step() {
   STEP=$((STEP + 1))
+  local elapsed=$(( $(date +%s) - _BUILD_START ))
   echo ""
-  echo "▶ [Step ${STEP}] $*"
+  echo "▶ [Step ${STEP}/${TOTAL_STEPS}] $*  (elapsed: ${elapsed}s)"
 }
-ok() { echo "  ✓ $*"; }
+ok()   { echo "  ✓ $*"; }
 info() { echo "  · $*"; }
+warn() { echo "  ⚠ $*"; }
+
+# Run a command up to N times before giving up.
+retry() {
+  local max="${1}"; shift
+  local delay="${1}"; shift
+  local label="${1}"; shift
+  local attempt
+  for attempt in $(seq 1 "$max"); do
+    if "$@"; then return 0; fi
+    if [[ "$attempt" -lt "$max" ]]; then
+      warn "Attempt ${attempt}/${max} failed for '${label}', retrying in ${delay}s..."
+      sleep "$delay"
+    fi
+  done
+  echo "  ✗ '${label}' failed after ${max} attempts."
+  return 1
+}
 
 step "Pre-build: check dist/ output directory"
 if [[ -d "${DIST}" ]] && [[ -n "$(ls -A "${DIST}" 2>/dev/null)" ]]; then
@@ -58,8 +80,13 @@ else
 fi
 
 step "Building conda-packed environment → ${ARCHIVE}"
-python "${PACK_DIR}/build_common.py" --output "$ARCHIVE" --format tar.gz
-ok "conda env packed: ${ARCHIVE}"
+info "Creating temp conda env, installing copaw[full], and packing (may take 5-15 min)..."
+_CONDA_START=$(date +%s)
+retry 3 15 "conda-pack" \
+  python "${PACK_DIR}/build_common.py" --output "$ARCHIVE" --format tar.gz
+_CONDA_END=$(date +%s)
+ok "conda env packed: ${ARCHIVE}  (took $(( _CONDA_END - _CONDA_START ))s)"
+info "Archive size: $(du -sh "$ARCHIVE" | cut -f1)"
 
 step "Assembling .app bundle → ${APP_DIR}"
 rm -rf "$APP_DIR"
@@ -69,8 +96,9 @@ ok "Bundle skeleton created"
 
 info "Unpacking conda env into Resources/env (this may take a while)..."
 mkdir -p "${APP_DIR}/Contents/Resources/env"
+_TAR_START=$(date +%s)
 tar -xzf "$ARCHIVE" -C "${APP_DIR}/Contents/Resources/env" --strip-components=0
-ok "conda env unpacked"
+ok "conda env unpacked  (took $(( $(date +%s) - _TAR_START ))s)"
 
 info "Running conda-unpack to fix embedded paths..."
 if [[ -x "${APP_DIR}/Contents/Resources/env/bin/conda-unpack" ]]; then
@@ -201,10 +229,12 @@ INFOPLIST
 
 ok "Info.plist written"
 
+_TOTAL=$(( $(date +%s) - _BUILD_START ))
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  Build complete: ${APP_DIR}"
-echo "  Version: ${VERSION}"
+echo "  Version:        ${VERSION}"
+echo "  Total time:     ${_TOTAL}s"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 # Optional: create zip for distribution (set CREATE_ZIP=1)
