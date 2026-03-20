@@ -182,6 +182,14 @@ LLM_BACKOFF_CAP = EnvVarLoader.get_float(
     min_value=0.5,
 )
 
+# LLM API call timeout (seconds) - for model inference requests
+LLM_TIMEOUT = EnvVarLoader.get_float(
+    "COPAW_LLM_TIMEOUT",
+    120.0,
+    min_value=10.0,
+    max_value=600.0,
+)
+
 # Tool guard approval timeout (seconds).
 try:
     TOOL_GUARD_APPROVAL_TIMEOUT_SECONDS = max(

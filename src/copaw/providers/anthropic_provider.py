@@ -10,6 +10,7 @@ from agentscope.model import ChatModelBase
 import anthropic
 
 from copaw.providers.provider import ModelInfo, Provider
+from copaw.constant import LLM_TIMEOUT
 
 DASHSCOPE_BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
 CODING_DASHSCOPE_BASE_URL = "https://coding.dashscope.aliyuncs.com/v1"
@@ -109,7 +110,10 @@ class AnthropicProvider(Provider):
     def get_chat_model_instance(self, model_id: str) -> ChatModelBase:
         from agentscope.model import AnthropicChatModel
 
-        client_kwargs = {"base_url": self.base_url}
+        client_kwargs = {
+            "base_url": self.base_url,
+            "timeout": LLM_TIMEOUT,
+        }
         if self.base_url == DASHSCOPE_BASE_URL:
             client_kwargs["default_headers"] = {
                 "x-dashscope-agentapp": json.dumps(
