@@ -16,7 +16,6 @@ from .runner import AgentRunner
 from ..config import (  # pylint: disable=no-name-in-module
     load_config,
     update_last_dispatch,
-    ConfigWatcher,
 )
 from ..config.utils import get_jobs_path, get_chats_path, get_config_path
 from ..constant import DOCS_ENABLED, LOG_LEVEL_ENV, CORS_ORIGINS, WORKING_DIR
