@@ -14,8 +14,8 @@ from typing import Optional
 from agentscope.message import TextBlock
 from agentscope.tool import ToolResponse
 
-from copaw.constant import WORKING_DIR
-from .utils import truncate_shell_output
+from ...constant import WORKING_DIR
+from ...config.context import get_current_workspace_dir
 
 
 def _kill_process_tree_win32(pid: int) -> None:
@@ -68,9 +68,14 @@ def _execute_subprocess_sync(
             return code will be -1 and stderr will contain timeout information.
     """
     try:
+        # Disable cmd.exe AutoRun (/D) to prevent spurious stderr
+        # from registry-configured startup scripts (e.g. "The system
+        # cannot find the path specified.").  /S prevents quote stripping
+        # so the inner command is passed through unchanged.
+        wrapped = ["cmd", "/D", "/S", "/C", cmd]
         with subprocess.Popen(
-            cmd,
-            shell=True,
+            wrapped,
+            shell=False,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=False,
@@ -131,6 +136,8 @@ async def execute_shell_command(
     error within <returncode></returncode>, <stdout></stdout> and
     <stderr></stderr> tags.
 
+    IMPORTANT: Always consider the operating system before choosing commands.
+
     Args:
         command (`str`):
             The shell command to execute.
@@ -151,7 +158,11 @@ async def execute_shell_command(
     cmd = (command or "").strip()
 
     # Set working directory
-    working_dir = cwd if cwd is not None else WORKING_DIR
+    # Use current workspace_dir from context, fallback to WORKING_DIR
+    if cwd is not None:
+        working_dir = cwd
+    else:
+        working_dir = get_current_workspace_dir() or WORKING_DIR
 
     # Ensure the venv Python is on PATH for subprocesses
     env = os.environ.copy()
@@ -231,8 +242,8 @@ async def execute_shell_command(
                     stderr_str = stderr_suffix
 
         # Apply output truncation
-        stdout_str = truncate_shell_output(stdout_str)
-        stderr_str = truncate_shell_output(stderr_str)
+        # stdout_str = truncate_shell_output(stdout_str)
+        # stderr_str = truncate_shell_output(stderr_str)
 
         # Format the response in a human-friendly way
         if returncode == 0:

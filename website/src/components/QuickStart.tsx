@@ -43,7 +43,7 @@ const COMMANDS = {
   ],
   docker: [
     `docker pull ${DOCKER_IMAGE}`,
-    `docker run -p 127.0.0.1:10888:10888 -v copaw-data:/app/working ${DOCKER_IMAGE}`,
+    `docker run -p 127.0.0.1:8088:8088 -v copaw-data:/app/working -v copaw-secrets:/app/working.secret ${DOCKER_IMAGE}`,
   ],
 } as const;
 
@@ -382,9 +382,8 @@ export function QuickStart({ config, lang }: QuickStartProps) {
                     type="button"
                     onClick={() => setScriptPlatform(platform)}
                     aria-pressed={scriptPlatform === platform}
-                    className={`quickstart-tab ${
-                      scriptPlatform === platform ? "active" : ""
-                    }`}
+                    className={`quickstart-tab ${scriptPlatform === platform ? "active" : ""
+                      }`}
                   >
                     {t(lang, `quickstart.platform.${platform}`)}
                   </button>
@@ -407,9 +406,8 @@ export function QuickStart({ config, lang }: QuickStartProps) {
                       type="button"
                       onClick={() => setScriptWinVariant(variant)}
                       aria-pressed={scriptWinVariant === variant}
-                      className={`quickstart-tab quickstart-tab-small ${
-                        scriptWinVariant === variant ? "active" : ""
-                      }`}
+                      className={`quickstart-tab quickstart-tab-small ${scriptWinVariant === variant ? "active" : ""
+                        }`}
                     >
                       {t(lang, `quickstart.shell.${variant}`)}
                     </button>
@@ -422,8 +420,8 @@ export function QuickStart({ config, lang }: QuickStartProps) {
                   scriptPlatform === "mac"
                     ? COMMANDS.scriptMac
                     : scriptWinVariant === "cmd"
-                    ? COMMANDS.scriptWinCmd
-                    : COMMANDS.scriptWinPs
+                      ? COMMANDS.scriptWinCmd
+                      : COMMANDS.scriptWinPs
                 }
                 copied={
                   copiedId === `script-${scriptPlatform}-${scriptWinVariant}`
@@ -433,8 +431,8 @@ export function QuickStart({ config, lang }: QuickStartProps) {
                     (scriptPlatform === "mac"
                       ? COMMANDS.scriptMac
                       : scriptWinVariant === "cmd"
-                      ? COMMANDS.scriptWinCmd
-                      : COMMANDS.scriptWinPs
+                        ? COMMANDS.scriptWinCmd
+                        : COMMANDS.scriptWinPs
                     ).join("\n"),
                     `script-${scriptPlatform}-${scriptWinVariant}`,
                   )
@@ -478,9 +476,8 @@ export function QuickStart({ config, lang }: QuickStartProps) {
                     type="button"
                     onClick={() => setCloudVariant(variant)}
                     aria-pressed={cloudVariant === variant}
-                    className={`quickstart-tab quickstart-tab-small ${
-                      cloudVariant === variant ? "active" : ""
-                    }`}
+                    className={`quickstart-tab quickstart-tab-small ${cloudVariant === variant ? "active" : ""
+                      }`}
                   >
                     {t(lang, `quickstart.cloud.${variant}`)}
                   </button>
