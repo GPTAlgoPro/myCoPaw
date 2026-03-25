@@ -1,0 +1,9 @@
+.git
+.venv
+__pycache__
+*.log
+
+/dist/
+/console/dist/
+/console/node_modules/
+/src/copaw/console/
