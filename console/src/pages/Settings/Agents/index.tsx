@@ -5,12 +5,14 @@ import { useTranslation } from "react-i18next";
 import { agentsApi } from "../../../api/modules/agents";
 import type { AgentSummary } from "../../../api/types/agents";
 import { useAgents } from "./useAgents";
+import { useAgentStore } from "../../../stores/agentStore";
 import { PageHeader, AgentTable, AgentModal } from "./components";
 import styles from "./index.module.less";
 
 export default function AgentsPage() {
   const { t } = useTranslation();
-  const { agents, loading, deleteAgent } = useAgents();
+  const { agents, loading, deleteAgent, toggleAgent, loadAgents } = useAgents();
+  const { selectedAgent, setSelectedAgent } = useAgentStore();
   const [modalVisible, setModalVisible] = useState(false);
   const [editingAgent, setEditingAgent] = useState<AgentSummary | null>(null);
   const [form] = Form.useForm();
@@ -45,6 +47,21 @@ export default function AgentsPage() {
     }
   };
 
+  const handleToggle = async (agentId: string, currentEnabled: boolean) => {
+    const newEnabled = !currentEnabled;
+    try {
+      await toggleAgent(agentId, newEnabled);
+
+      // If disabling the current agent, switch to default
+      if (!newEnabled && selectedAgent === agentId) {
+        setSelectedAgent("default");
+        message.info(t("agent.switchedToDefault"));
+      }
+    } catch {
+      // Error already handled in hook
+    }
+  };
+
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
@@ -58,6 +75,7 @@ export default function AgentsPage() {
       }
 
       setModalVisible(false);
+      await loadAgents();
     } catch (error: any) {
       console.error("Failed to save agent:", error);
       message.error(error.message || t("agent.saveFailed"));
@@ -82,6 +100,7 @@ export default function AgentsPage() {
           loading={loading}
           onEdit={handleEdit}
           onDelete={handleDelete}
+          onToggle={handleToggle}
         />
       </Card>
 

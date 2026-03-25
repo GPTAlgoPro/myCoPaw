@@ -155,6 +155,7 @@ class ChannelManager:
         return cls(channels)
 
     @classmethod
+    # pylint: disable=too-many-branches
     def from_config(
         cls,
         process: ProcessHandler,
@@ -193,20 +194,34 @@ class ChannelManager:
                 ch_cfg = SimpleNamespace(**defaults)
 
             # Check if channel is enabled
-            enabled = getattr(ch_cfg, "enabled", False)
+            # Handle both Pydantic objects (built-in)
+            # and dicts (customchannels)
+            if isinstance(ch_cfg, dict):
+                enabled = ch_cfg.get("enabled", False)
+            else:
+                enabled = getattr(ch_cfg, "enabled", False)
             if not enabled:
                 continue
 
-            filter_tool_messages = getattr(
-                ch_cfg,
-                "filter_tool_messages",
-                False,
-            )
-            filter_thinking = getattr(
-                ch_cfg,
-                "filter_thinking",
-                False,
-            )
+            # Handle both Pydantic objects (built-in)
+            # and dicts (custom channels)
+            if isinstance(ch_cfg, dict):
+                filter_tool_messages = ch_cfg.get(
+                    "filter_tool_messages",
+                    False,
+                )
+                filter_thinking = ch_cfg.get("filter_thinking", False)
+            else:
+                filter_tool_messages = getattr(
+                    ch_cfg,
+                    "filter_tool_messages",
+                    False,
+                )
+                filter_thinking = getattr(
+                    ch_cfg,
+                    "filter_thinking",
+                    False,
+                )
 
             from_config_kwargs = {
                 "process": process,
@@ -329,10 +344,10 @@ class ChannelManager:
                     (channel_id, key),
                     asyncio.Lock(),
                 )
-                async with key_lock:
-                    self._in_progress.add((channel_id, key))
-                    batch = _drain_same_key(q, ch, key, payload)
                 try:
+                    async with key_lock:
+                        self._in_progress.add((channel_id, key))
+                        batch = _drain_same_key(q, ch, key, payload)
                     await _process_batch(ch, batch)
                 finally:
                     self._in_progress.discard((channel_id, key))
