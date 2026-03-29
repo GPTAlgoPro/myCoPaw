@@ -1040,6 +1040,11 @@
     }
   },
   "chat": {
+    "modelSelectTooltip": "Select model",
+    "newChatTooltip": "New chat",
+    "chatHistoryTooltip": "Chat history",
+    "allChats": "All Chats",
+    "createNewChat": "Create New Chat",
     "disclaimer": "Works for you, grows with you",
     "greeting": "Hello, how can I help you today?",
     "description": "I am a helpful assistant that can help you with your questions.",
