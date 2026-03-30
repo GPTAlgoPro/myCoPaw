@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Button, Input } from "@agentscope-ai/design";
 import { PlusOutlined, SearchOutlined } from "@ant-design/icons";
 import { useProviders } from "./useProviders";
@@ -7,6 +7,7 @@ import {
   LoadingState,
   ProviderCard,
   CustomProviderModal,
+  ModelsSection,
 } from "./components";
 import { useTranslation } from "react-i18next";
 import type { ProviderInfo } from "../../../api/types/provider";
@@ -23,27 +24,27 @@ function ModelsPage() {
   const [addProviderOpen, setAddProviderOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const refreshProvidersSilently = () => fetchAll(false);
+  const refreshProvidersSilently = useCallback(() => {
+    void fetchAll(false);
+  }, [fetchAll]);
 
-  const { regularProviders, embeddedProviders } = useMemo(() => {
+  const { regularProviders, localProviders } = useMemo(() => {
     const regular: ProviderInfo[] = [];
-    const embedded: ProviderInfo[] = [];
+    const local: ProviderInfo[] = [];
     for (const p of providers) {
-      if (p.is_local) embedded.push(p);
+      if (p.is_local) local.push(p);
       else regular.push(p);
     }
     // Fuzzy search filter: match provider name (case-insensitive)
     const query = searchQuery.trim().toLowerCase();
     if (!query) {
-      return { regularProviders: regular, embeddedProviders: embedded };
+      return { regularProviders: regular, localProviders: local };
     }
     return {
       regularProviders: regular.filter((p) =>
         p.name.toLowerCase().includes(query),
       ),
-      embeddedProviders: embedded.filter((p) =>
-        p.name.toLowerCase().includes(query),
-      ),
+      localProviders: local.filter((p) => p.name.toLowerCase().includes(query)),
     };
   }, [providers, searchQuery]);
 
@@ -76,12 +77,19 @@ function ModelsPage() {
         <LoadingState message={error} error onRetry={fetchAll} />
       ) : (
         <>
+          {/* ---- LLM Section (top) ---- */}
+          <PageHeader parent="Settings" current={t("models.llmTitle")} />
+          <ModelsSection
+            providers={providers}
+            activeModels={activeModels}
+            onSaved={fetchAll}
+          />
           {/* ---- Providers Section ---- */}
           <div className={styles.providersBlock}>
             <div className={styles.sectionHeaderRow}>
               <PageHeader
-                title={t("models.providersTitle")}
-                description={t("models.providersDescription")}
+                parent="Settings"
+                current={t("models.providersTitle")}
               />
               <Button
                 type="primary"
@@ -114,21 +122,21 @@ function ModelsPage() {
               </Button>
             </div>
 
-            {regularProviders.length > 0 && (
+            {localProviders.length > 0 && (
               <div className={styles.providerGroup}>
+                {/* <h4 className={styles.providerGroupTitle}>
+                  {t("models.localEmbedded")}
+                </h4> */}
                 <div className={styles.providerCards}>
-                  {renderProviderCards(regularProviders)}
+                  {renderProviderCards(localProviders)}
                 </div>
               </div>
             )}
 
-            {embeddedProviders.length > 0 && (
+            {regularProviders.length > 0 && (
               <div className={styles.providerGroup}>
-                <h4 className={styles.providerGroupTitle}>
-                  {t("models.localEmbedded")}
-                </h4>
                 <div className={styles.providerCards}>
-                  {renderProviderCards(embeddedProviders)}
+                  {renderProviderCards(regularProviders)}
                 </div>
               </div>
             )}

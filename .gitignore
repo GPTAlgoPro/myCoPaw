@@ -18,7 +18,8 @@ dist/
 .wheelshim/
 # Console frontend build (generated in Docker/CI, do not commit)
 src/copaw/console/dist/
-src/copaw/console
+src/copaw/console/
+console/.cursor/
 
 # frontend (website)
 website/node_modules/
@@ -89,11 +90,6 @@ CLAUDE.md
 
 # Build cache
 .cache/  # Includes conda_unpack_wheels/ for Windows packaging workaround
-
-# CI config files (ignored locally)
-.pre-commit-config.yaml
-.flake8
-.github/workflows/
 
 # Hypothesis test cache
 .hypothesis/
