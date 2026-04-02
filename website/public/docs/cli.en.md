@@ -25,16 +25,11 @@ copaw init --force      # Overwrite existing config files
 
 **What the interactive flow covers (in order):**
 
-1. **Heartbeat** — interval (e.g. `30m`), target (`main` / `last`), optional
-   active hours.
-2. **Show tool details** — whether tool call details appear in channel messages.
-3. **Language** — `zh` / `en` / `ru` for agent persona files (SOUL.md, etc.).
-4. **Channels** — optionally configure iMessage / Discord / DingTalk / Feishu /
-   QQ / Console.
-5. **LLM provider** — select provider, enter API key, choose model (**required**).
-6. **Skills** — enable all / none / custom selection.
-7. **Environment variables** — optionally add key-value pairs for tools.
-8. **HEARTBEAT.md** — edit the heartbeat checklist in your default editor.
+1. **Default Workspace Initialization** — automatically create default workspace and configuration files.
+2. **LLM provider** — select provider, enter API key, choose model
+   (**required**).
+3. **Environment variables** — optionally add key-value pairs for tools.
+4. **HEARTBEAT.md** — edit the heartbeat checklist in your default editor.
 
 ### copaw app
 
@@ -42,8 +37,7 @@ Start the CoPaw server. Everything else — channels, cron jobs, the Console
 UI — depends on this.
 
 ```bash
-copaw app                             # Start on 127.0.0.1:10888
-copaw app --host 0.0.0.0 --port 9090 # Custom address
+copaw app                             # Start on 127.0.0.1:8088
 copaw app --reload                    # Auto-reload on code change (dev)
 copaw app --log-level debug           # Verbose logging
 ```
@@ -51,7 +45,7 @@ copaw app --log-level debug           # Verbose logging
 | Option        | Default     | Description                                                   |
 | ------------- | ----------- | ------------------------------------------------------------- |
 | `--host`      | `127.0.0.1` | Bind host                                                     |
-| `--port`      | `10888`      | Bind port                                                     |
+| `--port`      | `8088`      | Bind port                                                     |
 | `--reload`    | off         | Auto-reload on file changes (dev only)                        |
 | `--log-level` | `info`      | `critical` / `error` / `warning` / `info` / `debug` / `trace` |
 | `--workers`   | —           | **[DEPRECATED]** Ignored. CoPaw always uses 1 worker          |
@@ -60,7 +54,7 @@ copaw app --log-level debug           # Verbose logging
 
 ### Console
 
-Once `copaw app` is running, open `http://127.0.0.1:10888/` in your browser to
+Once `copaw app` is running, open `http://127.0.0.1:8088/` in your browser to
 access the **Console** — a web UI for chat, channels, cron, skills, models,
 and more. See [Console](./console) for a full walkthrough.
 
@@ -126,8 +120,8 @@ copaw models set-llm                 # Change active model only
 
 #### Local models
 
-CoPaw can also run models locally via llama.cpp — no API key needed.
-Install the backend first: `pip install 'copaw[local]'`
+CoPaw can also run models locally via llama.cpp, Ollama, or LM Studio — no API key needed.
+But you need to download the corresponding application first, such as [Ollama](https://ollama.com/download) or [LM Studio](https://lmstudio.ai/download).
 
 ```bash
 # Download a model (auto-selects Q4_K_M GGUF)
@@ -569,7 +563,7 @@ Every `copaw` subcommand inherits:
 | Option          | Default     | Description                                    |
 | --------------- | ----------- | ---------------------------------------------- |
 | `--host`        | `127.0.0.1` | API host (auto-detected from last `copaw app`) |
-| `--port`        | `10888`      | API port (auto-detected from last `copaw app`) |
+| `--port`        | `8088`      | API port (auto-detected from last `copaw app`) |
 | `-h` / `--help` |             | Show help message                              |
 
 If the server runs on a non-default address, pass these globally:

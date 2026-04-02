@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Drawer } from "antd";
 import { IconButton } from "@agentscope-ai/design";
 import { SparkOperateRightLine } from "@agentscope-ai/icons";
@@ -8,6 +8,7 @@ import {
   type IAgentScopeRuntimeWebUISession,
 } from "@agentscope-ai/chat";
 import { useTranslation } from "react-i18next";
+import type { ChatStatus } from "../../../../api/types/chat";
 import { chatApi } from "../../../../api/modules/chat";
 import sessionApi from "../../sessionApi";
 import ChatSessionItem from "../ChatSessionItem";
@@ -22,7 +23,8 @@ interface ExtendedChatSession extends IAgentScopeRuntimeWebUISession {
   channel?: string;
   createdAt?: string | null;
   meta?: Record<string, unknown>;
-  status?: "idle" | "running";
+  status?: ChatStatus;
+  generating?: boolean;
 }
 
 interface ChatSessionDrawerProps {
@@ -71,11 +73,48 @@ const ChatSessionDrawer: React.FC<ChatSessionDrawerProps> = (props) => {
   /** Current value of the rename input */
   const [editValue, setEditValue] = useState("");
 
+  /** Sessions sorted by createdAt descending, independent of context internal order */
+  const sortedSessions = useMemo(() => {
+    return [...sessions].sort((a, b) => {
+      const aTime = (a as ExtendedChatSession).createdAt;
+      const bTime = (b as ExtendedChatSession).createdAt;
+      if (!aTime && !bTime) return 0;
+      if (!aTime) return 1;
+      if (!bTime) return -1;
+      return new Date(bTime).getTime() - new Date(aTime).getTime();
+    });
+  }, [sessions]);
+
   /** Re-fetch session list from the backend and sync to context state */
   const refreshSessions = useCallback(async () => {
     const list = await sessionApi.getSessionList();
     setSessions(list);
   }, [setSessions]);
+
+  /** Open drawer → refresh session list (same deduped fetch as getSessionList). */
+  useEffect(() => {
+    if (!props.open) return;
+
+    let isCancelled = false;
+
+    const fetchSessions = async () => {
+      try {
+        const list = await sessionApi.getSessionList();
+        if (!isCancelled) {
+          setSessions(list);
+        }
+      } catch (error) {
+        // It's good practice to log errors.
+        console.error("Failed to refresh session list:", error);
+      }
+    };
+
+    void fetchSessions();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [props.open, setSessions]);
 
   const handleSessionClick = useCallback(
     (sessionId: string) => {
@@ -201,7 +240,7 @@ const ChatSessionDrawer: React.FC<ChatSessionDrawerProps> = (props) => {
       <div className={styles.listWrapper}>
         <div className={styles.topGradient} />
         <div className={styles.list}>
-          {sessions.map((session) => {
+          {sortedSessions.map((session) => {
             const ext = session as ExtendedChatSession;
             const channelKey = ext.channel?.trim() || "";
             const channelLabel = channelKey
@@ -214,6 +253,8 @@ const ChatSessionDrawer: React.FC<ChatSessionDrawerProps> = (props) => {
                 time={formatCreatedAt(ext.createdAt ?? null)}
                 channelKey={channelKey || undefined}
                 channelLabel={channelLabel}
+                chatStatus={ext.status}
+                generating={ext.generating}
                 active={session.id === currentSessionId}
                 editing={editingSessionId === session.id}
                 editValue={
