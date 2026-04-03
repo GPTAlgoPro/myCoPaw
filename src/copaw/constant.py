@@ -181,6 +181,13 @@ DASHSCOPE_BASE_URL = EnvVarLoader.get_str(
 # When unset, CORS middleware is not applied.
 CORS_ORIGINS = EnvVarLoader.get_str("COPAW_CORS_ORIGINS", "").strip()
 
+# LLM API timeout (seconds) for individual API calls.
+LLM_TIMEOUT = EnvVarLoader.get_float(
+    "COPAW_LLM_TIMEOUT",
+    120.0,
+    min_value=5.0,
+)
+
 # LLM API retry configuration
 LLM_MAX_RETRIES = EnvVarLoader.get_int(
     "COPAW_LLM_MAX_RETRIES",
